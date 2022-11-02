@@ -1,45 +1,34 @@
 const express = require("express");
 const app = express();
-const bodyParser = require("body-parser");
+const users = require("./users.json");
 
-let users = require("./users.json");
+const daysAccess = (req, res, next) => {
+  const date = new Date();
+  const today = date.getDay();
 
-//support parsing of application/x-www-form-urlencoded post data
-app.use(bodyParser.urlencoded({ extended: true }));
+  const nextDay = new Date(date);
 
-app.get("/users", (req, res) => {
-  res.status(200).json(users);
+  const todayDate = nextDay.getDate();
+  const addDate = date.getTime();
+
+  const findDate = 7 - todayDate;
+
+  nextDay.setDate(date.getDate() + findDate);
+
+  if (today === 1) next();
+  return res.status(403).send(`Revenez le lundi prochain + ${nextDay}`);
+};
+
+app.get("/users", daysAccess, (req, res) => {
+  res.send("users");
+  res.status(404);
 });
-
 app.get("/users/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const user = users.find((user) => user.id === id);
   res.status(200).json(user);
 });
 
-app.post("/users", (req, res) => {
-  console.log(req.body);
-  users.push(req.body);
-  res.status(200).json(users);
-});
-
-app.put("/users/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  users = users.map((user) =>
-    user.id === id
-      ? { ...user, name: req.body.name, email: req.body.email }
-      : user
-  );
-  res.status(200).json(users.find((user) => user.id === id));
-});
-
-app.delete("/users/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  let user = users.find((user) => user.id === id);
-  users.splice(users.indexOf(user), 1);
-  res.status(200).json(users);
-});
-
 app.listen(5000, () => {
-  console.log("Serveur à l'écoute dans => http://localhost:5000/");
+  console.log("le serveur a démarré ");
 });
